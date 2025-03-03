@@ -1,4 +1,3 @@
-# For .exe making by pyinstaller by cmd and binary pdftk.exe pyinstaller --onefile --noconsole --icon=icon.ico --add-binary "pdftk.exe;." pdftkgui.py
 import os
 import sys
 import re
@@ -35,13 +34,12 @@ def is_valid_pdftk_range(range_str, total_pages):
     range_pattern = re.compile(r'^\d+(-\d+)?(,(\d+(-\d+)?))*$')  # Valid patterns: 1, 2-5, 3,7-9
     even_odd_pattern = re.compile(r'^\d+-\d+(even|odd)$')  # Special case: 1-10even, 3-9odd
 
-    # Check basic pattern validity
-    if not (range_pattern.match(range_str) or even_odd_pattern.match(range_str)):
-        return False
-
     # Parse and validate page numbers
     parts = range_str.split(',')
+    parts = [part.strip() for part in parts]
     for part in parts:
+        if not (range_pattern.match(part) or even_odd_pattern.match(part)):
+            return False
         if 'even' in part or 'odd' in part:
             start, end = map(int, re.findall(r'\d+', part))
             if start < 1 or end > total_pages or start > end:
@@ -57,6 +55,13 @@ def is_valid_pdftk_range(range_str, total_pages):
 
     return True
 
+def handle_ranges(label,range_str):
+    parts = range_str.split(',')
+    parts = [part.strip() for part in parts]
+    range_handle = []
+    for part in parts:
+        range_handle.append(f'{label}{part}')
+    return range_handle
 
 
 
@@ -106,7 +111,9 @@ class PdfMerger(tk.Frame):
                 label = all_labels[i]
                 labels[label] = ranges[i]
                 new_list.append(f'{label}={fnm}')
-            cat_list = [f'{label}{rang}' for label,rang in labels.items()]
+            cat_list = []
+            for label,rang in labels.items():
+                cat_list += handle_ranges(label,rang)
             cmd = [pdftk_path,*new_list,'cat',*cat_list,'output',output_path]
             print(cmd)
             f=subprocess.run(cmd,capture_output=True,text=True,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -118,6 +125,7 @@ class PdfMerger(tk.Frame):
         try:
             self.selected_index = self.range_list.curselection()[0]
             self.original_txt = self.range_list.get(self.selected_index)
+            self.original_pg_cnt = int(self.num_list.get(self.selected_index))
             x,y,width,height = self.range_list.bbox(self.selected_index)
             width=self.range_list.winfo_width()
             self.rentry = tk.Entry(self.range_list)
@@ -130,8 +138,8 @@ class PdfMerger(tk.Frame):
             pass
     def save_edit(self,event):
         new_text = self.rentry.get()
-        if not is_valid_pdftk_range(new_text,int(self.original_txt.split('-')[-1])):
-            messagebox.showerror("Error", "One or More pdfs has invalid range")
+        if not is_valid_pdftk_range(new_text,self.original_pg_cnt):
+            messagebox.showerror("Error", "One or More pdfs has invalid range.")
             self.rentry.destroy()
             return
         self.range_list.delete(self.selected_index)
