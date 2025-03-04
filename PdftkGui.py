@@ -1,3 +1,4 @@
+#from functools import partial
 import os
 import sys
 import re
@@ -8,14 +9,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 
-# To Add drag up and down files in merge pdfs
 # secure Pdfs
 # Remove passwords
 
 
 
-pdftk_path=os.path.join(sys._MEIPASS,"pdftk.exe")
-#pdftk_path = 'pdftk'
+#pdftk_path=os.path.join(sys._MEIPASS,"pdftk.exe")
+pdftk_path = 'pdftk'
 
 def pg_count(pdf):
     if os.path.exists(pdf):
@@ -77,17 +77,22 @@ class PdfMerger(tk.Frame):
     '''Handles merging of pdfs.'''
     def __init__(self, parent):
         super().__init__(parent)
+        self.configure(bg='lightyellow')
         self.pack(fill="both", expand=True)
         self.intro = '''First, add your input PDFs. Order them via drag-and-drop. Their pages will be copied and merged to create your new PDF. List the pages to copy using a mix of page numbers (e.g. 1,3,7) and page ranges (e.g. 1-3, 12-4, 20-8). You can also append "even" or "odd" (e.g. 1-10even). You can list the same page numbers or ranges more than once. You can also list the same PDF document more than once.'''
-        self.intro_tbox = tk.Text(self,wrap='word', font=('Arial',8),height=4,width=100,state='disabled')
-        self.intro_tbox.grid(row=0,column=0,columnspan=3,pady=0,padx=0,)
+        self.intro_tbox = tk.Text(self,wrap='word', font=('Arial',10),height=4,width=116,state='disabled',bg='lightgreen')
+        self.intro_tbox.grid(row=0,column=0,columnspan=3,pady=10,padx=10)
         self.intro_tbox.config(state='normal') 
-        self.intro_tbox.tag_configure('center',justify='center')
+        self.intro_tbox.tag_configure('center',justify='center',lmargin1=20,lmargin2=20)
         self.intro_tbox.insert('1.0',self.intro) 
+        self.intro_tbox.tag_add('center','1.0','end')
         self.intro_tbox.config(state='disabled')
         tk.Label(self, text="Selected pdfs:").grid(row=1,column=0,pady=0,padx=0)
         self.file_list = tk.Listbox(self, width=75, height=15)
         self.file_list.grid(row=2,column=0,pady=0,padx=0)
+        self.file_list.bind('<Button-1>',self._on_drag_start)
+        self.file_list.bind('<B1-Motion>',self._on_drag_motion)
+        self.file_list.bind('<ButtonRelease-1>',self._on_drag_drop)
         tk.Label(self, text="Page Count").grid(row=1,column=1,pady=0,padx=0)
         self.num_list = tk.Listbox(self, width=10, height=15)
         self.num_list.grid(row=2,column=1,pady=0,padx=0)
@@ -97,6 +102,34 @@ class PdfMerger(tk.Frame):
         self.range_list.bind('<Double-Button-1>',self.edit_item)
         tk.Button(self, text="Add PDFs", command=self.add_pdfs).grid(row=3,column=0,pady=5)
         tk.Button(self, text="Merge PDFs", command=self.merge_pdfs, bg="lightgreen").grid(row=3,column=1,pady=10)
+    def _on_drag_start(self,event):
+        widget = event.widget
+        self.dragged_file_index = widget.nearest(event.y)
+        widget.selection_clear(0,tk.END)
+        widget.selection_set(self.dragged_file_index)
+    def _on_drag_motion(self,event):
+        widget = event.widget
+        index = widget.nearest(event.y)
+        widget.activate(index)
+        if event.y < 20:
+            widget.yview_scroll(-1,'units')
+        elif event.y > widget.winfo_height() -20:
+            widget.yview_scroll(1,'units')
+    def _on_drag_drop(self,event):
+        widget = event.widget
+        self.dropped_at_index = widget.nearest(event.y)
+        if self.dropped_at_index != self.dragged_file_index:
+            text = widget.get(self.dragged_file_index)
+            ntext = self.num_list.get(self.dragged_file_index)
+            rtext = self.range_list.get(self.dragged_file_index)
+            self.num_list.delete(self.dragged_file_index)
+            self.num_list.insert(self.dropped_at_index,ntext)
+            self.range_list.delete(self.dragged_file_index)
+            self.range_list.insert(self.dropped_at_index,rtext)
+            widget.delete(self.dragged_file_index)
+            widget.insert(self.dropped_at_index,text)
+            widget.selection_clear(0,tk.END)
+            widget.selection_set(self.dropped_at_index)
     def add_pdfs(self):
         files = filedialog.askopenfilenames(filetypes=[("PDF Files", "*.pdf")])
         for file in files:
@@ -157,6 +190,7 @@ class BookmarkManager(tk.Frame):
     """Handles adding bookmarks to a PDF using pdftk."""
     def __init__(self, parent):
         super().__init__(parent)
+        self.configure(bg='lightyellow')
         self.chapters = []
         self.pack(fill="both", expand=True)
         self.slabel = tk.Label(self,text='Select Pdf:')
@@ -228,6 +262,7 @@ class MainApp(tk.Tk):
         super().__init__()
         self.title("PDF Tool")
         self.geometry("1000x500")
+        #self.configure(bg='lightyellow')
         # Menu
         menubar = tk.Menu(self)
         self.config(menu=menubar)
