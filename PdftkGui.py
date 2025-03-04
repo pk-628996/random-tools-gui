@@ -7,6 +7,13 @@ from sys import platform
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+
+# To Add drag up and down files in merge pdfs
+# secure Pdfs
+# Remove passwords
+
+
+
 pdftk_path=os.path.join(sys._MEIPASS,"pdftk.exe")
 #pdftk_path = 'pdftk'
 
