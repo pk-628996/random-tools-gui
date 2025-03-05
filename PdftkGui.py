@@ -267,11 +267,16 @@ class MainApp(tk.Tk):
         menubar = tk.Menu(self)
         self.config(menu=menubar)
         menu_options = tk.Menu(menubar, tearoff=0)
+        help_menu = tk.Menu(menubar,tearoff=0)
         menubar.add_cascade(label="Options", menu=menu_options)
+        menubar.add_cascade(label='Help',menu=help_menu)
         menu_options.add_command(label="Merge PDFs", command=self.show_pdf_merger)
         menu_options.add_command(label="Add Bookmark", command=self.show_book_marker)
         menu_options.add_separator()
         menu_options.add_command(label="Exit", command=self.quit)
+        help_menu.add_command(label='About',command=self.show_about_info)
+        help_menu.add_separator()
+        help_menu.add_command(label='Exit',command=self.quit)
         self.current_frame = None
         self.show_pdf_merger()
     def show_frame(self, frame_class):
@@ -283,6 +288,8 @@ class MainApp(tk.Tk):
         self.show_frame(PdfMerger)
     def show_book_marker(self):
         self.show_frame(BookmarkManager)
+    def show_about_info(self):
+        messagebox.showinfo('About','nothing to say.')
 
 
 if __name__=='__main__':
