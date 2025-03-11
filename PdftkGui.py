@@ -174,6 +174,7 @@ class PdfMerger(tk.Frame):
             self.rentry.place(x=x,y=y,width=width,height=height)
             self.rentry.focus_set()
         except IndexError:
+            print('IndexError')
             pass
     def save_edit(self,event):
         new_text = self.rentry.get()
