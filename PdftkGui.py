@@ -160,7 +160,7 @@ class PdfMerger(tk.Frame):
                 messagebox.showinfo("Success", f"PDFs Merged!\nSaved as {output_path}")
             else:
                 messagebox.showerror('Error',f.stderr)
-    def edit_item(self,event):
+    def edit_item(self,event): 
         try:
             self.selected_index = self.range_list.curselection()[0]
             self.original_txt = self.range_list.get(self.selected_index)
